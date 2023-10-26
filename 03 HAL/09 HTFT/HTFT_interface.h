@@ -7,7 +7,7 @@
 *********************************************************************/
 #ifndef HTFT_INTERFACE_H
 #define HTFT_INTERFACE_H
-
+#include "fonts.h"
 
 /* Color constants */
 #define BLACK 0x0000
@@ -39,8 +39,11 @@ void HTFT_voidDrawRectangle (u8 Copy_u8XaxisStart, u8 Copy_u8Width, u8 Copy_u8Ya
 void HTFT_voidFillRectangle(u8 Copy_u8XaxisStart, u8 Copy_u8XaxisEnd, u8 Copy_u8YaxisStart,
 							u8 Copy_u8YaxisEnd, u16 Copy_u16Color);
 
-void HTFT_voidWriteChar(u8 Copy_u8Xaxis , u8 Copy_u8Yaxis , u16 *Copy_ptrChar, u16 Copy_u8Color );
+void HTFT_voidWriteChar(u8 Copy_u8Xaxis, u8 Copy_u8Yaxis , u8 Copy_u8Character,
+						FontDef Copy_uddtFont, u16 Copy_u8Color, u16 Copy_u8BackGroundColor );
 
+void HTFT_voidWriteString(u16 Copy_u8Xaxis, u16 Copy_u8Yaxis,  char* str,
+						  FontDef Copy_uddtFont, u16 Copy_u8Color, u16 Copy_u8BackGroundColor);
 
 
 #endif

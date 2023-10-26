@@ -46,10 +46,10 @@
 /*										 01 - MGPIO_voidSetPinMode  									 */
 /*-------------------------------------------------------------------------------------------------------*/
 /*	1-  Function Description ->  function Set the mode of the Pin                                        */
-/*	2-  Options : (A) MGPIO_MODE_INPUT                                                                   */
-/*				  (B) MGPIO_MODE_OUTPUT                                                                  */
-/*				  (C) MGPIO_MODE_ALTF                                                                    */
-/*				  (D) MGPIO_MODE_ANALOG                                                                  */
+/*	2-  Options : (A) GPIO_MODE_INPUT                                                                   */
+/*				  (B) GPIO_MODE_OUTPUT                                                                  */
+/*				  (C) GPIO_MODE_ALTF                                                                    */
+/*				  (D) GPIO_MODE_ANALOG                                                                  */
 /*				                                                                                         */
 /*	3- Function Arguments : (A)  Copy_u8PortName  : The port Number (ex : GPIOA , GPIOB)     */
 /*							(B)	 Copy_u8PinNum    : The Pin Number (ex : MGPIO_PIN0 , MGPIO_PIN1)        */
@@ -575,11 +575,11 @@ void MGPIO_voidSetAltFun (u8 Copy_u8PortName , u8 Copy_u8PinNum , u8 Copy_u8AltF
 	{
 		switch (Copy_u8PortName)
 		{
-			case GPIOA : MGPIOA -> AFRH  |= (Copy_u8AltFun << 4U * (Copy_u8PinNum))  ; break ;
+			case GPIOA : MGPIOA -> AFRH  |= (Copy_u8AltFun << 4U * (Copy_u8PinNum-8))  ; break ;
 
-			case GPIOB : MGPIOB -> AFRH  |= (Copy_u8AltFun << 4U * (Copy_u8PinNum))  ; break ;
+			case GPIOB : MGPIOB -> AFRH  |= (Copy_u8AltFun << 4U * (Copy_u8PinNum-8))  ; break ;
 
-			case GPIOC : MGPIOC -> AFRH  |= (Copy_u8AltFun << 4U * (Copy_u8PinNum))  ; break ;
+			case GPIOC : MGPIOC -> AFRH  |= (Copy_u8AltFun << 4U * (Copy_u8PinNum-8))  ; break ;
 		}
 	}
 

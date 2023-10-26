@@ -16,6 +16,7 @@
 #include "HAL/HTFT/HTFT_config.h"
 #include "HAL/HTFT/HTFT_interface.h"
 
+
 void HTFT_voidInit(void)
 {
 	MGPIO_voidSetPinMode(TFT_A0_PIN, GPIO_OUTPUT);
@@ -78,20 +79,21 @@ void HTFT_voidDisplayImage (const u16* Copy_PtrImage)
 
 void HTFT_voidDrawLine( u8 Copy_u8XaxisStart , u8 Copy_u8YaxisStart , u8 Copy_u8Position, u8 Copy_u8Length , u16 Copy_u8Color )
 {
+	/* Set X Address */
+	HTFT_voidWriteCommand(0x2A);
+	HTFT_voidWriteData(0);
+	HTFT_voidWriteData(Copy_u8XaxisStart);
+
+	/* Set Y Address */
+	HTFT_voidWriteCommand(0x2B);
+	HTFT_voidWriteData(0);
+	HTFT_voidWriteData(Copy_u8YaxisStart);
+
+	/* RAM Write */
+	HTFT_voidWriteCommand(0x2C);
+
 	while(Copy_u8Length>0)
 	{
-		/* Set X Address */
-		HTFT_voidWriteCommand(0x2A);
-		HTFT_voidWriteData(0);
-		HTFT_voidWriteData(Copy_u8XaxisStart);
-
-		/* Set Y Address */
-		HTFT_voidWriteCommand(0x2B);
-		HTFT_voidWriteData(0);
-		HTFT_voidWriteData(Copy_u8YaxisStart);
-
-		/* RAM Write */
-		HTFT_voidWriteCommand(0x2C);
 		HTFT_voidWriteData ( Copy_u8Color >> 8   ); // write high byte
 		HTFT_voidWriteData ( (u8)Copy_u8Color ); // write low byte
 		Copy_u8Length--;
@@ -155,40 +157,75 @@ void HTFT_voidFillRectangle(u8 Copy_u8XaxisStart, u8 Copy_u8XaxisEnd, u8 Copy_u8
 }
 
 
-void HTFT_voidWriteChar(u8 Copy_u8Xaxis , u8 Copy_u8Yaxis , u16 *Copy_ptrChar, u16 Copy_u8Color ){
+void HTFT_voidWriteChar(u8 Copy_u8Xaxis, u8 Copy_u8Yaxis , u8 Copy_u8Character,
+						FontDef Copy_uddtFont, u16 Copy_u8Color, u16 Copy_u8BackGroundColor )
+{
+	u32 L_u32Data;
+	u8 L_u8Iterator1,L_u8Iterator2;
+    // column address set
+	HTFT_voidWriteCommand(0x2A);
+	HTFT_voidWriteData(0);
+	HTFT_voidWriteData(Copy_u8Xaxis);
+	HTFT_voidWriteData(0);
+	HTFT_voidWriteData(Copy_u8Xaxis+Copy_uddtFont.width-1);
 
-	u16  LOC_u16Mask = 0x01 ;
-	u16 LOC_u16Pixel       ;
+    // row address set
+	HTFT_voidWriteCommand(0x2B);
+	HTFT_voidWriteData(0);
+	HTFT_voidWriteData(Copy_u8Yaxis);
+	HTFT_voidWriteData(0);
+	HTFT_voidWriteData(Copy_u8Yaxis+Copy_uddtFont.height-1);
 
-	for( u8 LOC_u8Iterator1 = 0 ; LOC_u8Iterator1 < 16 ; LOC_u8Iterator1++ ){
+	HTFT_voidWriteCommand(0x2C);
 
-		for( u8 LOC_u8Iterator2 = 0 ; LOC_u8Iterator2 < 16 ; LOC_u8Iterator2++ ){
+	   for(L_u8Iterator1 = 0; L_u8Iterator1 < Copy_uddtFont.height; L_u8Iterator1++)
+	   {
+		   L_u32Data = Copy_uddtFont.data[(Copy_u8Character - 32) * Copy_uddtFont.height + L_u8Iterator1];
+	        for(L_u8Iterator2 = 0; L_u8Iterator2 < Copy_uddtFont.width; L_u8Iterator2++)
+	        {
+	            if((L_u32Data << L_u8Iterator2) & 0x8000)
+	            {
+					HTFT_voidWriteData ( Copy_u8Color >> 8   ); // write hi byte
+					HTFT_voidWriteData ( (u8)Copy_u8Color  ); // write lo byte
 
-			/* Set The Position Of 5x7 Character */
-			HTFT_voidWriteCommand( 0x2A ); // set column range (x0,x1)
-			HTFT_voidWriteData(0);
-			HTFT_voidWriteData( Copy_u8Xaxis + LOC_u8Iterator1 );
+	            }
+	            else
+	            {
+					HTFT_voidWriteData ( Copy_u8BackGroundColor >> 8   ); // write hi byte
+					HTFT_voidWriteData ( (u8)Copy_u8BackGroundColor  ); // write lo byte
+	            }
+	        }
+	    }
 
-			HTFT_voidWriteCommand( 0x2B ); // set row range (y0,y1)
-			HTFT_voidWriteData(0);
-			HTFT_voidWriteData(Copy_u8Yaxis + LOC_u8Iterator2);
+}
 
-			HTFT_voidWriteCommand( 0x2C ); // memory write
+void HTFT_voidWriteString(u16 Copy_u8Xaxis, u16 Copy_u8Yaxis,  char* str,
+						  FontDef Copy_uddtFont, u16 Copy_u8Color, u16 Copy_u8BackGroundColor)
+{
 
-			LOC_u16Pixel = Copy_ptrChar[ LOC_u8Iterator1 ] & LOC_u16Mask ;
+    while(*str!='\0')
+    {
+        if(Copy_u8Xaxis + Copy_uddtFont.width >= 128)
+        {
+        	Copy_u8Xaxis = 0;
+        	Copy_u8Yaxis += Copy_uddtFont.height;
+            if(Copy_u8Yaxis + Copy_uddtFont.height >= 160)
+            {
+                break;
+            }
 
-			if( LOC_u16Pixel != 0  )
-			{
-				HTFT_voidWriteData ( Copy_u8Color >> 8   ); // write hi byte
-				HTFT_voidWriteData ( (u8)Copy_u8Color  ); // write lo byte
-			}
-			LOC_u16Mask <<= 1 ;
+            if(*str == ' ')
+            {
+                // skip spaces in the beginning of the new line
+                str++;
+                continue;
+            }
+        }
 
-		}
-
-		LOC_u16Mask = 0x01 ;
-
-	}
+    	HTFT_voidWriteChar(Copy_u8Xaxis, Copy_u8Yaxis, *str, Copy_uddtFont, Copy_u8Color, Copy_u8BackGroundColor);
+    	Copy_u8Xaxis += Copy_uddtFont.width;
+        str++;
+    }
 
 }
 
